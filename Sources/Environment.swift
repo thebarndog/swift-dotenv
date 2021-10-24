@@ -6,6 +6,7 @@
 //
 
 import Collections
+import Foundation
 
 /// Environment object that represents a `.env` configuration file.
 @dynamicMemberLookup
@@ -163,7 +164,7 @@ public struct Environment {
     // MARK: - Subscript
     
     public subscript(key: String) -> Value? {
-        values[key]
+        extractValue(forKey: key)
     }
     
     public subscript(key: String, default defaultValue: @autoclosure () -> Value) -> Value {
@@ -173,6 +174,16 @@ public struct Environment {
     // MARK: Dynamic Member Lookup
     
     public subscript(dynamicMember member: String) -> Value? {
-        values[member]
+        extractValue(forKey: member)
+    }
+    
+    // MARK: - Helpers
+    
+    private func extractValue(forKey key: String) -> Value? {
+        if let value = values[key] {
+            return value
+        }
+        // otherwise fallback to use `ProcessInfo`
+        return Value(ProcessInfo.processInfo.environment[key] ?? "")
     }
 }
