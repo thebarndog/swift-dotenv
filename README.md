@@ -1,10 +1,10 @@
 # SwiftDotenv
 
-A Swift micro-framework for loading and using `.env` files in a Swift framework or application.
+A one-stop shop for working with environment values in a Swift program. 
 
 ## Overview
 
-`SwiftDotenv` is a small and compact Swift package that allows you to load and save `.env` files at runtime.
+`SwiftDotenv` is a small and compact Swift package that allows you to load and save `.env` files at runtime and query for those values as well as system provided environemntal values via `ProcessInfo`. It's a single abstraction for dealing with environment variables at runtime as well as a handy mechanism keeping your secrets and private keys safe in a local configuration file that doesn't get committed to version control, rather than hardcoding secret strings into your app or framework.
 
 ### What is a `.env` file?
 
@@ -66,6 +66,18 @@ Enviroments that were created programmatically can also be saved to disk via `Do
 let environment = try Environment(values: ["API_KEY": "some-key"])
 try Dotenv.save(environment, atPath: ".env", force: false) // wont overwrite an existing file when force == false
 ```
+
+### `ProcessInfo` & `FallbackStrategy`
+
+If a value doesn't exist in the set of values fetched from your `.env` file, `Environment` will then fallback and look in `ProcessInfo` for the desired value. Custom fallback strategies can be also be set so that `Environment` will query first from `ProcessInfo` and then to the environment values pulled from the configuration file. 
+
+The default fallback strategy is `.init(query: .configuration, fallback: .process)` meaning `Environment` will first look for the value in the configuration file and then fallback to `ProcessInfo` if it can't find it. The `fallback` parameter can also be `nil`, removing fallback functionality. 
+
+To modify the fallback strategy:
+
+```swift
+Environment.fallbackStrategy = .init(query: .process)
+```  
 
 ### Contributing
 
