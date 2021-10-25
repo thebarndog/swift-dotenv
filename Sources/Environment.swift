@@ -193,7 +193,7 @@ public struct Environment {
     
     /// Transform the environment into a string representation that can be written to disk.
     /// - Returns: File contents.
-    func serialize(includeProcess: Bool = false) throws -> String {
+    func serialize() throws -> String {
         values.enumerated().reduce(into: "") { accumulated, current in
             accumulated += "\(current.element.key)\(Self.delimeter)\(current.element.value.stringValue)\n"
         }
