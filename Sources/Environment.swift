@@ -216,35 +216,39 @@ public struct Environment {
     }
     
     // MARK: - Helpers
-    
+
+    /// Fetch the value for the given key.
+    /// - Parameter key: Key to query for.
+    /// - Returns: Value if any exists.
     private func queryValue(forKey key: String) -> Value? {
         // check which should be queried first
-        let value: Value?
-        switch Self.fallbackStrategy.query {
-        case .configuration:
-            value = values[key]
-        case .process:
-            guard let environmentValue = processInfo.environment[key] else {
-                value = nil
-                break
-            }
-            value = Value(environmentValue)
-        }
+        let value: Value? = query(datasource: Self.fallbackStrategy.query, forKey: key)
         // if we pulled a non-nil value out, then no need to fallback
-        guard let value = value else {
-            // now check the falllback
-            switch Self.fallbackStrategy.fallback {
-            case .configuration:
-                return values[key]
-            case .process:
-                guard let value = processInfo.environment[key] else {
-                    return nil
-                }
-                return Value(value)
-            case nil:
-                return nil
-            }
+        guard value != nil else {
+            return query(datasource: Self.fallbackStrategy.fallback, forKey: key)
         }
         return value
+    }
+
+    /// Helper function to query the environment based on the given datasource.
+    /// - Parameters:
+    ///   - datasource: Environment datasource to query. The parameter is optional so that optionality checks are performed internal
+    ///   to this method, rather then at every callsite, which matters for the fallback strategy where `fallbackStrategy.fallback` is optional.
+    ///   - key: Key to query for.
+    /// - Returns: Value if any exists.
+    private func query(datasource: DataSource?, forKey key: String) -> Value? {
+        // early exit if the datasource is nil
+        guard let datasource = datasource else {
+            return nil
+        }
+        switch datasource {
+        case .configuration:
+            return values[key]
+        case .process:
+            guard let environmentValue = processInfo.environment[key] else {
+                return nil
+            }
+            return Value(environmentValue)
+        }
     }
 }

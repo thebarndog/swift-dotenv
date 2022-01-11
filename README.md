@@ -16,11 +16,13 @@ A one-stop shop for working with environment values in a Swift program.
 
 ```swift
 .package(url: "https://github.com/thebarndog/swift-dotenv.git", .upToNextMajor("1.0.0"))
-
-import SwiftDotenv
 ```
 
 ## Usage
+
+```swift
+import SwiftDotenv
+```
 
 ### `Environment`
 

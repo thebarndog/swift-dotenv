@@ -20,6 +20,7 @@ public struct Dotenv {
     
     /// Failures that can occur when saving an environment to disk.
     public enum SavingFailure: Error {
+        /// A configuration file already exists at that path.
         case fileAlreadyExists(path: String)
     }
     
