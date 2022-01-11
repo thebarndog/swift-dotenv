@@ -69,6 +69,12 @@ let environment = try Environment(values: ["API_KEY": "some-key"])
 try Dotenv.save(environment, atPath: ".env", force: false) // wont overwrite an existing file when force == false
 ```
 
+By default, `Dotenv` uses `FileManger.default` to load and save files but even that can be swapped out:
+
+```swift
+Dotenv.fileManger = someCustomInstance
+```
+
 ### `ProcessInfo` & `FallbackStrategy`
 
 If a value doesn't exist in the set of values fetched from your `.env` file, `Environment` will then fallback and look in `ProcessInfo` for the desired value. Custom fallback strategies can be also be set so that `Environment` will query first from `ProcessInfo` and then to the environment values pulled from the configuration file. 
