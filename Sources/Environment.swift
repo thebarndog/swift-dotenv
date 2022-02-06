@@ -163,6 +163,12 @@ public struct Environment {
             }
         self.processInfo = processInfo
     }
+
+    /// Create an empty environment.
+    /// - Parameter processInfo: Process info to seed the environment with.
+    public init(processInfo: ProcessInfo = ProcessInfo.processInfo) throws {
+        try self.init(values: [:] as OrderedDictionary<String, Value>, processInfo: processInfo)
+    }
     
     /// Create an environment from the contents of a file.
     /// - Parameter contents: File contents.
@@ -197,11 +203,21 @@ public struct Environment {
     ///   - key: Key to set value for.
     ///   - force: Flag that indicates if the value should be forced if a value with the same key exists, defaults to `false`.
     /// - Important: If the environment is set to read from the process, this method is a no-op as the process' environment is read-only.
-    public mutating func setValue(_ value: Value?, forKey key :String, force: Bool = false) {
+    public mutating func setValue(_ value: Value?, forKey key: String, force: Bool = false) {
         guard values[key] == nil || force else {
             return
         }
         values[key] = value
+    }
+
+    /// Set a new value in the environment for the given key, optionally specifiying if the value should overwrite an existing value, if any exists.
+    /// - Parameters:
+    ///   - value: Value to set in the environment.
+    ///   - key: Key to set value for.
+    ///   - force: Flag that indicates if the value should be forced if a value with the same key exists, defaults to `false`.
+    /// - Important: If the environment is set to read from the process, this method is a no-op as the process' environment is read-only.
+    public mutating func setValue(_ value: String, forKey key: String, force: Bool = false) {
+        setValue(Value(value), forKey: key, force: force)
     }
 
     /// Remove a value for the given key, returning the old value, if any exsts.
@@ -210,7 +226,7 @@ public struct Environment {
     @discardableResult
     public mutating func removeValue(forKey key: String) -> Value? {
         let oldValue = queryValue(forKey: key)
-        setValue(nil, forKey: key)
+        setValue(nil, forKey: key, force: true)
         return oldValue
     }
     
