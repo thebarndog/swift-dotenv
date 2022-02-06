@@ -49,6 +49,7 @@ public struct Dotenv {
     }
     
     /// Save an environment object to a file.
+    /// - Important: This method does not serialize process values to disk.
     /// - Parameters:
     ///   - environment: Environment to serialize.
     ///   - path: Path to save the environment to.

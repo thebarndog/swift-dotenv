@@ -39,4 +39,64 @@ final class EnvironmentTests: XCTestCase {
         XCTAssertEqual(env.networkRetries, .integer(3))
         XCTAssertEqual(env.networkTimeout, .double(10.5))
     }
+
+    // MARK: - Adding and Removing Values
+
+    func testAddingValueForNonexistantKey() throws {
+        var environment = try Environment()
+
+        XCTAssertNil(environment.key)
+
+        environment.setValue(.integer(1), forKey: "key")
+
+        XCTAssertEqual(environment.key, .integer(1))
+    }
+
+    func testAddingValueForExistingKeyWithoutForcing() throws {
+        var environment = try Environment(values: [
+            "key": .integer(1)
+        ])
+
+        XCTAssertEqual(environment.key, .integer(1))
+
+        environment.setValue(.integer(2), forKey: "key")
+
+        XCTAssertEqual(environment.key, .integer(1))
+    }
+
+    func testAddingValueForExistingValueWithForcing() throws {
+        var environment = try Environment(values: [
+            "key": .integer(1)
+        ])
+
+        XCTAssertEqual(environment.key, .integer(1))
+
+        environment.setValue(.integer(2), forKey: "key", force: true)
+
+        XCTAssertEqual(environment.key, .integer(2))
+    }
+
+    func testRemovingNonexistantValue() throws {
+        var environment = try Environment()
+
+        XCTAssertNil(environment.key)
+
+        let oldValue = environment.removeValue(forKey: "key")
+
+        XCTAssertNil(oldValue)
+    }
+
+
+    func testRemovingValue() throws {
+        var environment = try Environment(values: [
+            "key": .integer(1)
+        ])
+
+        XCTAssertNotNil(environment.key)
+
+        let oldValue = environment.removeValue(forKey: "key")
+
+        XCTAssertEqual(oldValue, .integer(1))
+        XCTAssertNil(environment.key)
+    }
 }
