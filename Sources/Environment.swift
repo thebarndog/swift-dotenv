@@ -121,10 +121,10 @@ public struct Environment {
     /// Environment fallback strategy.
     public static var fallbackStrategy: FallbackStrategy = .init(query: .configuration, fallback: .process)
 
-    // MARK: - Private
+    // MARK: - Storage
     
     /// Backing environment values.
-    private let values: OrderedDictionary<String, Value>
+    public private(set) var values: OrderedDictionary<String, Value>
     
     /// Process info instance.
     private let processInfo: ProcessInfo
@@ -188,10 +188,36 @@ public struct Environment {
         self.values = values
         self.processInfo = processInfo
     }
+
+    // MARK: - Modifying the Environment
+
+    /// Set a new value in the environment for the given key, optionally specifiying if the value should overwrite an existing value, if any exists.
+    /// - Parameters:
+    ///   - value: Value to set in the environment.
+    ///   - key: Key to set value for.
+    ///   - force: Flag that indicates if the value should be forced if a value with the same key exists, defaults to `false`.
+    /// - Important: If the environment is set to read from the process, this method is a no-op as the process' environment is read-only.
+    public mutating func setValue(_ value: Value?, forKey key :String, force: Bool = false) {
+        guard values[key] == nil || force else {
+            return
+        }
+        values[key] = value
+    }
+
+    /// Remove a value for the given key, returning the old value, if any exsts.
+    /// - Parameter key: Key to remove.
+    /// - Returns: Old value that was removed, if any.
+    @discardableResult
+    public mutating func removeValue(forKey key: String) -> Value? {
+        let oldValue = queryValue(forKey: key)
+        setValue(nil, forKey: key)
+        return oldValue
+    }
     
     // MARK: - Serialization
     
     /// Transform the environment into a string representation that can be written to disk.
+    /// - Important: If the environment is backed by the current process, this method will **not** serialize those values to disk, only those manually set via `setValue(_:forKey:force:)`.
     /// - Returns: File contents.
     func serialize() throws -> String {
         values.enumerated().reduce(into: "") { accumulated, current in
@@ -202,17 +228,29 @@ public struct Environment {
     // MARK: - Subscript
     
     public subscript(key: String) -> Value? {
-        queryValue(forKey: key)
+        get {
+            queryValue(forKey: key)
+        } set {
+            setValue(newValue, forKey: key)
+        }
     }
     
     public subscript(key: String, default defaultValue: @autoclosure () -> Value) -> Value {
-        queryValue(forKey: key) ?? defaultValue()
+        get {
+            queryValue(forKey: key) ?? defaultValue()
+        } set {
+            setValue(newValue, forKey: key)
+        }
     }
     
     // MARK: Dynamic Member Lookup
     
     public subscript(dynamicMember member: String) -> Value? {
-        queryValue(forKey: member)
+        get {
+            queryValue(forKey: member)
+        } set {
+            setValue(newValue, forKey: member)
+        }
     }
     
     // MARK: - Helpers
