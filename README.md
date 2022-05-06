@@ -52,8 +52,6 @@ let key = environment.apiKey // "some-key"
 let enabled = environment.onboardingEnabled // false
 ```
 
-**Note**: Keys that use snake case or dashes will not work with dynamic member lookup as the special characters aren't easily translated to property names.
-
 ### `Dotenv`
 
 To load an environment from a `.env` file, use `Dotenv.load(path:)`:
