@@ -27,10 +27,10 @@ final class EnvironmentTests: XCTestCase {
     
     func testCreatingEnvironmentFromTypeSafeConstruct() throws {
         let env = try Environment(values: [
-            "apiKey": .string("some-secret"),
-            "onboardingEnabled": .boolean(true),
-            "networkRetries": .integer(3),
-            "networkTimeout": .double(10.5)
+            "API_KEY": .string("some-secret"),
+            "ONBOARDING_ENABLED": .boolean(true),
+            "NETWORK_RETRIES": .integer(3),
+            "NETWORK_TIMEOUT": .double(10.5)
         ])
         
         // implicitly testing subscripting
@@ -47,31 +47,32 @@ final class EnvironmentTests: XCTestCase {
 
         XCTAssertNil(environment.key)
 
-        environment.setValue(.integer(1), forKey: "key")
+        environment.setValue(.integer(1), forKey: "KEY")
 
         XCTAssertEqual(environment.key, .integer(1))
+        print(environment.values)
     }
 
     func testAddingValueForExistingKeyWithoutForcing() throws {
         var environment = try Environment(values: [
-            "key": .integer(1)
+            "KEY": .integer(1)
         ])
 
         XCTAssertEqual(environment.key, .integer(1))
 
-        environment.setValue(.integer(2), forKey: "key")
+        environment.setValue(.integer(2), forKey: "KEY")
 
         XCTAssertEqual(environment.key, .integer(1))
     }
 
     func testAddingValueForExistingValueWithForcing() throws {
         var environment = try Environment(values: [
-            "key": .integer(1)
+            "KEY": .integer(1)
         ])
 
         XCTAssertEqual(environment.key, .integer(1))
 
-        environment.setValue(.integer(2), forKey: "key", force: true)
+        environment.setValue(.integer(2), forKey: "KEY", force: true)
 
         XCTAssertEqual(environment.key, .integer(2))
     }
@@ -81,7 +82,7 @@ final class EnvironmentTests: XCTestCase {
 
         XCTAssertNil(environment.key)
 
-        let oldValue = environment.removeValue(forKey: "key")
+        let oldValue = environment.removeValue(forKey: "KEY")
 
         XCTAssertNil(oldValue)
     }
@@ -89,12 +90,12 @@ final class EnvironmentTests: XCTestCase {
 
     func testRemovingValue() throws {
         var environment = try Environment(values: [
-            "key": .integer(1)
+            "KEY": .integer(1)
         ])
 
         XCTAssertNotNil(environment.key)
 
-        let oldValue = environment.removeValue(forKey: "key")
+        let oldValue = environment.removeValue(forKey: "KEY")
 
         XCTAssertEqual(oldValue, .integer(1))
         XCTAssertNil(environment.key)
