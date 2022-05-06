@@ -10,8 +10,8 @@ import Foundation
 extension String {
 
     /// Convert a string from camel case to snake case.
-    /// Taken from
-    /// - Returns: https://github.com/apple/swift/blob/88b093e9d77d6201935a2c2fb13f27d961836777/stdlib/public/Darwin/Foundation/JSONEncoder.swift#L161
+    /// Taken from https://github.com/apple/swift/blob/88b093e9d77d6201935a2c2fb13f27d961836777/stdlib/public/Darwin/Foundation/JSONEncoder.swift#L161
+    /// - Returns: Snake case formatted string.
     func camelCaseToSnakeCase() -> String {
         guard !isEmpty else { return self }
 
