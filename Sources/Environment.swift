@@ -52,7 +52,14 @@ public struct Environment {
             } else if let integerValue = Int(stringValue) {
                 self = .integer(integerValue)
             } else {
-                self = .string(stringValue)
+                // replace escape double quotes
+                var value = stringValue
+                if value[value.startIndex] == "\"" && value[value.index(before: value.endIndex)] == "\"" {
+                    value.remove(at: value.startIndex)
+                    value.remove(at: value.index(before: value.endIndex))
+                    value = value.replacingOccurrences(of: "\\\"", with: "\"")
+                }
+                self = .string(value)
             }
         }
         
@@ -180,12 +187,16 @@ public struct Environment {
         // we loop over all the entries in the file which are already separated by a newline
         var values: OrderedDictionary<String, Value> = .init()
         for line in lines {
+            // ignore comments
+            if line.starts(with: "#") {
+                continue
+            }
             // split by the delimeter
             let substrings = line.split(separator: Self.delimeter)
             // make sure we can grab two and only two string values
             guard
-                let key = substrings.first,
-                let value = substrings.last,
+                let key = substrings.first?.trimmingCharacters(in: .whitespacesAndNewlines),
+                let value = substrings.last?.trimmingCharacters(in: .whitespacesAndNewlines),
                 substrings.count == 2,
                 !key.isEmpty,
                 !value.isEmpty else {
