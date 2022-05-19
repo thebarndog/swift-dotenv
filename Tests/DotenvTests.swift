@@ -33,8 +33,9 @@ final class DotenvTests: XCTestCase {
             return
         }
         let env = try Dotenv.load(path: path)
-        XCTAssertEqual(env.key1, .string("value1"))
-        XCTAssertEqual(env.key2, .string("value2"))
+        print(env.values)
+        XCTAssertEqual(env.apiKey, .string("some-value"))
+        XCTAssertEqual(env.buildNumber, .integer(5))
         XCTAssertNil(env.nonExistentValue)
     }
     

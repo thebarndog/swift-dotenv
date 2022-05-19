@@ -153,6 +153,8 @@ public struct Environment {
     public init(values: OrderedDictionary<String, Value>, processInfo: ProcessInfo = ProcessInfo.processInfo) throws {
         self.values = try values
             .filter {
+                // have to check the string case and make sure that the key and value pair are not empty
+                // only needs to be checked for strings which unlike booleans, doubles, and integers, can be empty
                 guard case let .string(value) = $0.value else {
                     return true
                 }
@@ -161,6 +163,7 @@ public struct Environment {
                 }
                 return true
             }
+
         self.processInfo = processInfo
     }
 
@@ -263,9 +266,9 @@ public struct Environment {
     
     public subscript(dynamicMember member: String) -> Value? {
         get {
-            queryValue(forKey: member)
+            queryValue(forKey: member.camelCaseToSnakeCase().uppercased())
         } set {
-            setValue(newValue, forKey: member)
+            setValue(newValue, forKey: member.camelCaseToSnakeCase().uppercased())
         }
     }
     
