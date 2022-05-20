@@ -36,6 +36,9 @@ final class DotenvTests: XCTestCase {
         print(env.values)
         XCTAssertEqual(env.apiKey, .string("some-value"))
         XCTAssertEqual(env.buildNumber, .integer(5))
+        XCTAssertEqual(env.identifier, .string("com.app.example"))
+        XCTAssertEqual(env.mailTemplate, .string("The \"Quoted\" Title"))
+        XCTAssertEqual(env.dbPassphrase, .string("1qaz?#@\"' wsx$"))
         XCTAssertNil(env.nonExistentValue)
     }
     

@@ -53,13 +53,7 @@ public struct Environment {
                 self = .integer(integerValue)
             } else {
                 // replace escape double quotes
-                var value = stringValue
-                if value[value.startIndex] == "\"" && value[value.index(before: value.endIndex)] == "\"" {
-                    value.remove(at: value.startIndex)
-                    value.remove(at: value.index(before: value.endIndex))
-                    value = value.replacingOccurrences(of: "\\\"", with: "\"")
-                }
-                self = .string(value)
+                self = .string(stringValue.trimmingCharacters(in: .init(charactersIn: "\"")).replacingOccurrences(of: "\\\"", with: "\""))
             }
         }
         
