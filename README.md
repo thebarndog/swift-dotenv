@@ -42,17 +42,16 @@ let environment = try Environment(values: ["FEATURE_ON": .boolean(true)])
 
 `Environment` also supports `@dynamicMemberLookup`:
 
-```swift
-let environment = try Environment(values: [
-    "apiKey": "some-key",
-    "onboardingEnabled": false
-])
+```
+# .env file
+API_KEY=some-key
+ONBOARDING_ENABLED=false
+```
 
+```swift
 let key = environment.apiKey // "some-key"
 let enabled = environment.onboardingEnabled // false
 ```
-
-**Note**: Keys that use snake case or dashes will not work with dynamic member lookup as the special characters aren't easily translated to property names.
 
 ### `Dotenv`
 

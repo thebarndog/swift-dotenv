@@ -52,7 +52,8 @@ public struct Environment {
             } else if let integerValue = Int(stringValue) {
                 self = .integer(integerValue)
             } else {
-                self = .string(stringValue)
+                // replace escape double quotes
+                self = .string(stringValue.trimmingCharacters(in: .init(charactersIn: "\"")).replacingOccurrences(of: "\\\"", with: "\""))
             }
         }
         
@@ -153,6 +154,8 @@ public struct Environment {
     public init(values: OrderedDictionary<String, Value>, processInfo: ProcessInfo = ProcessInfo.processInfo) throws {
         self.values = try values
             .filter {
+                // have to check the string case and make sure that the key and value pair are not empty
+                // only needs to be checked for strings which unlike booleans, doubles, and integers, can be empty
                 guard case let .string(value) = $0.value else {
                     return true
                 }
@@ -161,6 +164,7 @@ public struct Environment {
                 }
                 return true
             }
+
         self.processInfo = processInfo
     }
 
@@ -177,12 +181,16 @@ public struct Environment {
         // we loop over all the entries in the file which are already separated by a newline
         var values: OrderedDictionary<String, Value> = .init()
         for line in lines {
+            // ignore comments
+            if line.starts(with: "#") {
+                continue
+            }
             // split by the delimeter
             let substrings = line.split(separator: Self.delimeter)
             // make sure we can grab two and only two string values
             guard
-                let key = substrings.first,
-                let value = substrings.last,
+                let key = substrings.first?.trimmingCharacters(in: .whitespacesAndNewlines),
+                let value = substrings.last?.trimmingCharacters(in: .whitespacesAndNewlines),
                 substrings.count == 2,
                 !key.isEmpty,
                 !value.isEmpty else {
@@ -263,9 +271,9 @@ public struct Environment {
     
     public subscript(dynamicMember member: String) -> Value? {
         get {
-            queryValue(forKey: member)
+            queryValue(forKey: member.camelCaseToSnakeCase().uppercased())
         } set {
-            setValue(newValue, forKey: member)
+            setValue(newValue, forKey: member.camelCaseToSnakeCase().uppercased())
         }
     }
     
