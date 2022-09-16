@@ -1,0 +1,6 @@
+language: objective-c
+os: osx
+osx_image: xcode14
+script:
+  - swift build
+  - swift test
