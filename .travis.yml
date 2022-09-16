@@ -1,6 +1,11 @@
-language: objective-c
-os: osx
-osx_image: xcode13.4
+jobs:
+  include:
+    - os: linux
+      dist: bionic
+      sudo: required
+    - os: osx
+      osx_image: xcode13.4
+before_install:
+  - ./scripts/pre_install.sh
 script:
-  - swift build
-  - swift test
+  - ./scripts/job.sh
