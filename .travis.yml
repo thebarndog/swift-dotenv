@@ -1,0 +1,11 @@
+jobs:
+  include:
+    - os: linux
+      dist: bionic
+      sudo: required
+    - os: osx
+      osx_image: xcode13.4
+before_install:
+  - ./scripts/pre_install.sh
+script:
+  - ./scripts/job.sh
