@@ -15,76 +15,65 @@ A one-stop shop for working with environment values in a Swift program.
 `SwiftDotenv` supports Swift Package Manager and can be added by adding this entry to your `Package.swift` manifest file:
 
 ```swift
-.package(url: "https://github.com/thebarndog/swift-dotenv.git", .upToNextMajor("1.0.0"))
+.package(url: "https://github.com/thebarndog/swift-dotenv.git", .upToNextMajor("2.0.0"))
 ```
 
 ## Usage
 
 ```swift
 import SwiftDotenv
-```
 
-### `Environment`
+// load in environment variables
+try Dotenv.configure()
 
-`Environment` is an immutable model representing an `.env` file. It can be created by loading it via the `Dotenv` structure or created in code via dictionary literals. `Environment` uses type-safe representations of environment values such as `.boolean(Bool)` or `.integer(Int)`.
-
-To create an environment from scratch:
-
-```swift
-let environment = try Environment(values: ["API_KEY": "some-key"])
-```
-
-or with the type-safe api:
-
-```swift
-let environment = try Environment(values: ["FEATURE_ON": .boolean(true)])
-```
-
-`Environment` also supports `@dynamicMemberLookup`:
-
-```
-# .env file
-API_KEY=some-key
-ONBOARDING_ENABLED=false
-```
-
-```swift
-let key = environment.apiKey // "some-key"
-let enabled = environment.onboardingEnabled // false
+// access values
+print(Dotenv.apiSecret)
 ```
 
 ### `Dotenv`
 
-To load an environment from a `.env` file, use `Dotenv.load(path:)`:
+To configure the environment with values from your environment file, call `Dotenv.configure(atPath:overwrite:)`:
 
 ```swift
-let environment = try Dotenv.load(path: ".env")
+try Dotenv.configure()
 ```
 
-Enviroments that were created programmatically can also be saved to disk via `Dotenv.save(environment:toPath:force:)`: 
+It can optionally be provided with a path:
 
 ```swift
-let environment = try Environment(values: ["API_KEY": "some-key"])
-try Dotenv.save(environment, atPath: ".env", force: false) // wont overwrite an existing file when force == false
+try Dotenv.configure(atPath: ".custom-env")
 ```
 
-By default, `Dotenv` uses `FileManger.default` to load and save files but even that can be swapped out:
+and the ability to not overwrite currently existing environment variables:
 
 ```swift
-Dotenv.fileManger = someCustomInstance
+try Dotenv.configure(overwrite: false)
 ```
 
-### `ProcessInfo` & `FallbackStrategy`
-
-If a value doesn't exist in the set of values fetched from your `.env` file, `Environment` will then fallback and look in `ProcessInfo` for the desired value. Custom fallback strategies can be also be set so that `Environment` will query first from `ProcessInfo` and then to the environment values pulled from the configuration file. 
-
-The default fallback strategy is `.init(query: .configuration, fallback: .process)` meaning `Environment` will first look for the value in the configuration file and then fallback to `ProcessInfo` if it can't find it. The `fallback` parameter can also be `nil`, removing fallback functionality. 
-
-To modify the fallback strategy:
+To read values:
 
 ```swift
-Environment.fallbackStrategy = .init(query: .process)
-```  
+let key = Dotenv.apiKey // using dynamic member lookup
+let key = Dotenv["API_KEY"] // using regular subscripting
+```
+
+To set new values:
+
+```swift
+Dotenv.apiKey = .string("some-secret")
+Dotenv["API_KEY"] = .string("some-secret")
+
+// set a value and turn off overwriting 
+Dotenv.set(value: "false", forKey: "DEBUG_MODE", overwrite: false)
+```
+
+The `Dotenv` structure can also be given a custom delimeter, file manager, and process info:
+
+```swift
+Dotenv.delimeter = "-" // default is "="
+Dotenv.processInfo = ProcessInfo() // default is `ProcessInfo.processInfo`
+Dotenv.fileManager = FileManager() // default is `FileManager.default`
+```
 
 ### Contributing
 
