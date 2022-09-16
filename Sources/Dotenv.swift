@@ -81,12 +81,6 @@ public enum Dotenv {
         case unableToReadEnvironmentFile
     }
     
-    /// Failures that can occur when saving an environment to disk.
-    public enum SavingFailure: Error {
-        /// A configuration file already exists at that path.
-        case fileAlreadyExists(path: String)
-    }
-
     /// Represents errors that can occur during encoding.
     public enum DecodingFailure: Error {
         // the key value pair is in some way malformed
