@@ -58,21 +58,21 @@ final class DotenvTests: XCTestCase {
         Dotenv.set(value: "1234", forKey: "API_KEY")
 
         XCTAssertEqual(Dotenv.apiKey, .integer(1234))
-        XCTAssertEqual(ProcessInfo.processInfo.environment["API_KEY"], "1234")
+        XCTAssertEqual(Dotenv.processInfo.environment["API_KEY"], "1234")
     }
 
     func testOverridingValues() {
         setenv("API_KEY", "1234", 1)
 
-        XCTAssertEqual(ProcessInfo.processInfo.environment["API_KEY"], "1234")
+        XCTAssertEqual(Dotenv.processInfo.environment["API_KEY"], "1234")
 
         Dotenv.set(value: "secret-key", forKey: "API_KEY", overwrite: true)
 
-        XCTAssertEqual(ProcessInfo.processInfo.environment["API_KEY"], "secret-key")
+        XCTAssertEqual(Dotenv.processInfo.environment["API_KEY"], "secret-key")
 
         Dotenv.set(value: "super-secret-key", forKey: "API_KEY", overwrite: false)
 
-        XCTAssertEqual(ProcessInfo.processInfo.environment["API_KEY"], "secret-key")
+        XCTAssertEqual(Dotenv.processInfo.environment["API_KEY"], "secret-key")
     }
 }
 
