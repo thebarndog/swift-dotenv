@@ -79,14 +79,30 @@ public enum Dotenv {
         case environmentFileIsMissing
         /// The environment ifle is in some way malformed.
         case unableToReadEnvironmentFile
+        /// Unable to open the environment file, may be a permissions issue.
+        case cannotOpenEnvironmentFile(path: String)
     }
     
-    /// Represents errors that can occur during encoding.
+    /// Represents errors that can occur during decoding.
     public enum DecodingFailure: Error {
         // the key value pair is in some way malformed
         case malformedKeyValuePair
         /// Either the key or value is empty.
         case emptyKeyValuePair(pair: (String, String))
+    }
+    
+    /// Holds common constant values so that they can be referred to by a common name rather than using raw values.
+    /// Structure is public because it's being used as the default value for public function arguments.
+    public enum Constants {
+        
+        /// Character that indicates that the line is a line of comments and should be ignored.
+        public static let comments = "#"
+        
+        /// Default file extension for an environment file.
+        public static let defaultFileExtension = ".env"
+        
+        /// Standard newline character.
+        public static let newline: Character = "\n"
     }
 
     // MARK: - Configuration
@@ -104,40 +120,59 @@ public enum Dotenv {
     /// - Parameters:
     ///   - path: Path for the environment file, defaults to `.env`.
     ///   - overwrite: Flag that indicates if pre-existing values in the environment should be overwritten with values from the environment file, defaults to `true`.
-    public static func configure(atPath path: String = ".env", overwrite: Bool = true) throws {
-        let contents = try readFileContents(atPath: path)
-        let lines = contents.split(separator: "\n")
-        // we loop over all the entries in the file which are already separated by a newline
-        for line in lines {
-            // ignore comments
-            if line.starts(with: "#") {
-                continue
-            }
-            // split by the delimeter
-            let substrings = line.split(separator: Self.delimeter)
-
-            // make sure we can grab two and only two string values
-            guard
-                let key = substrings.first?.trimmingCharacters(in: .whitespacesAndNewlines),
-                let value = substrings.last?.trimmingCharacters(in: .whitespacesAndNewlines),
-                substrings.count == 2,
-                !key.isEmpty,
-                !value.isEmpty else {
-                    throw DecodingFailure.malformedKeyValuePair
-            }
+    public static func configure(atPath path: String = Constants.defaultFileExtension, overwrite: Bool = true) throws {
+        guard Self.fileManager.fileExists(atPath: path) else {
+            throw LoadingFailure.environmentFileIsMissing
+        }
+        // read the file in line by line
+        // using a file pointer to read each line in one by one
+        // which is more performant for large files
+        guard let file = freopen(path, "r", stdin) else {
+            throw LoadingFailure.cannotOpenEnvironmentFile(path: URL(fileURLWithPath: path).absoluteString)
+        }
+        defer {
+            // close the file handle when we're done reading
+            fclose(file)
+        }
+        while let line = readLine(strippingNewline: true), !line.starts(with: Constants.comments) {
+            let (key, value) = try extractKeyValuePair(fromLine: line, withDelimeter: Self.delimeter)
             setenv(key, value, overwrite ? 1 : 0)
         }
     }
-
-    private static func readFileContents(atPath path: String) throws -> String {
-        let fileManager = Self.fileManager
-        guard fileManager.fileExists(atPath: path) else {
+    
+    /// Configure the environment with the values loaded from the environment file. This method can be used from an async context.
+    /// - Parameters:
+    ///   - path: Environment file path, defaults to `.env`.
+    ///   - overwrite: Whether or not an existing value should be overwritten, defaults to `true`.
+    @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *)
+    public static func configure(atPath path: String = Constants.defaultFileExtension, overwrite: Bool = true) async throws {
+        guard Self.fileManager.fileExists(atPath: path) else {
             throw LoadingFailure.environmentFileIsMissing
         }
-        guard let contents = try? String(contentsOf: URL(fileURLWithPath: path)) else {
+        let url = URL(fileURLWithPath: path)
+        do {
+            for try await line in url.lines where !line.starts(with: Constants.comments) {
+                let (key, value) = try extractKeyValuePair(fromLine: line, withDelimeter: Self.delimeter)
+                setenv(key, value, overwrite ? 1 : 0)
+            }
+        } catch {
             throw LoadingFailure.unableToReadEnvironmentFile
         }
-        return contents
+    }
+    
+    // MARK: - Helpers
+    
+    /// Extract a tuple of an environment key value pair from a given line.
+    /// - Parameters:
+    ///   - line: Line of text.
+    ///   - delimeter: Delimeter to separate the text by.
+    /// - Returns: Key value tuple pair.
+    private static func extractKeyValuePair(fromLine line: String, withDelimeter delimeter: Character = Self.delimeter) throws -> (String, String) {
+        let pair = line.split(separator: delimeter)
+        guard let key = pair.first, let value = pair.last, pair.count == 2, !key.isEmpty, !value.isEmpty else {
+            throw DecodingFailure.malformedKeyValuePair
+        }
+        return (key.trimmingCharacters(in: .whitespacesAndNewlines), value.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
     // MARK: - Values

@@ -1,10 +1,3 @@
-//
-//  DotenvTests.swift
-//  SwiftDotenvTests
-//
-//  Created by Brendan Conron on 10/17/21.
-//
-
 import SwiftDotenv
 import XCTest
 
