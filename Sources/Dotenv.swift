@@ -154,8 +154,8 @@ public enum Dotenv {
     ///   - value: Value to set.
     ///   - key: Key to set the value with.
     ///   - overwrite: Flag that indicates if any existing value should be overwritten, defaults to `true`.
-    public static func set(value: Value, forKey key: String, overwrite: Bool = true) {
-        set(value: value.stringValue, forKey: key, overwrite: overwrite)
+    public static func set(value: Value?, forKey key: String, overwrite: Bool = true) {
+        set(value: value?.stringValue, forKey: key, overwrite: overwrite)
     }
 
     /// Set a value in the environment.
@@ -163,7 +163,7 @@ public enum Dotenv {
     ///   - value: Value to set.
     ///   - key: Key to set the value with.
     ///   - overwrite: Flag that indicates if any existing value should be overwritten, defaults to `true`.
-    public static func set(value: String, forKey key: String, overwrite: Bool = true) {
+    public static func set(value: String?, forKey key: String, overwrite: Bool = true) {
         setenv(key, value, overwrite ? 1 : 0)
     }
 
@@ -173,7 +173,6 @@ public enum Dotenv {
         get {
             Value(values[key])
         } set {
-            guard let newValue else { return }
             set(value: newValue, forKey: key)
         }
     }
@@ -192,7 +191,6 @@ public enum Dotenv {
         get {
             Value(values[member.camelCaseToSnakeCase().uppercased()])
         } set {
-            guard let newValue else { return }
             set(value: newValue, forKey: member.camelCaseToSnakeCase().uppercased())
         }
     }
