@@ -1,10 +1,3 @@
-//
-//  String+CamelCase.swift
-//  SwiftDotenv
-//
-//  Created by Brendan Conron on 5/6/22.
-//
-
 import Foundation
 
 extension String {
