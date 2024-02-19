@@ -4,7 +4,9 @@ A one-stop shop for working with environment values in a Swift program.
 
 ## Overview
 
-`SwiftDotenv` is a small and compact Swift package that allows you to load and save `.env` files at runtime and query for those values as well as system provided environemntal values via `ProcessInfo`. It's a single abstraction for dealing with environment variables at runtime as well as a handy mechanism keeping your secrets and private keys safe in a local configuration file that doesn't get committed to version control, rather than hardcoding secret strings into your app or framework.
+`SwiftDotenv` is a small and compact Swift package that allows you to load and save `.env` files at runtime and query for those values as well as system provided environemntal values via `ProcessInfo`. It's a single abstraction for dealing with environment variables at runtime in a local configuration file that doesn't get committed to version control, rather than hardcoding strings into your app or framework.
+
+**IMPORTANT**: Please note that storing secrets or other sensitive information in the `.env` file does not necessarily make your app secure. For more information, see [this great article from NSHipster](https://nshipster.com/secrets/).
 
 ### What is a `.env` file?
 
