@@ -1,8 +1,15 @@
-#if os(Linux)
-import Glibc
-#else
+#if os(macOS) || os(iOS)
 import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#elseif canImport(Musl)
+import Musl
+#elseif os(Windows)
+import ucrt
+#else
+#error("Unknown platform")
 #endif
+
 import Foundation
 
 /// Structure used to load and save environment files.
