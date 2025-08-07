@@ -10,7 +10,11 @@ import ucrt
 #error("Unknown platform")
 #endif
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#elseif canImport(Foundation)
 import Foundation
+#endif
 
 /// Structure used to load and save environment files.
 @dynamicMemberLookup
