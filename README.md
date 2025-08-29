@@ -25,7 +25,7 @@ A one-stop shop for working with environment values in a Swift program.
 `SwiftDotenv` supports Swift Package Manager and can be added by adding this entry to your `Package.swift` manifest file:
 
 ```swift
-.package(url: "https://github.com/thebarndog/swift-dotenv.git", .upToNextMajor("2.0.0"))
+.package(url: "https://github.com/thebarndog/swift-dotenv.git", from: "2.0.0")
 ```
 
 You can also use solutions such as [`swift-sh`](https://github.com/mxcl/swift-sh) for a less cumbersome scripting setup.
