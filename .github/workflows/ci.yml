@@ -18,9 +18,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-   - uses: SwiftyLab/setup-swift@latest
-    with:
-      swift-version: ${{ matrix.swift }}
+    - uses: SwiftyLab/setup-swift@latest
+      with:
+        swift-version: ${{ matrix.swift }}
+        os: ${{ matrix.os }}
     - uses: actions/checkout@v4
     - name: Build
       run: swift build -v
