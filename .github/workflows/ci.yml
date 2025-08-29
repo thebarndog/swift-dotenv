@@ -18,9 +18,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: swift-actions/setup-swift@v2
+    - name: Install Swift
+      uses: slashmo/install-swift@v0.4.0
       with:
-        swift-version: ${{ matrix.swift }}
+    version: ${{ matrix.swift }}
     - uses: actions/checkout@v4
     - name: Build
       run: swift build -v
