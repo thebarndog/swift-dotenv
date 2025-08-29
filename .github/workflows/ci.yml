@@ -14,14 +14,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        swift: ["5.8", "5.9", "5.10", "6.0", "6.1"]
+        swift: ["5.9", "5.10", "6.0", "6.1"]
     runs-on: ${{ matrix.os }}
 
     steps:
     - uses: SwiftyLab/setup-swift@latest
       with:
         swift-version: ${{ matrix.swift }}
-        os: ${{ matrix.os }}
     - uses: actions/checkout@v4
     - name: Build
       run: swift build -v
