@@ -57,9 +57,11 @@ jobs:
         curl -fsSL -o static-linux-sdk.tar.gz "https://download.swift.org/swift-${VERSION}-release/static-sdk/${TAG}/${TAG}_static-linux-0.0.1.artifactbundle.tar.gz"
         swift sdk install static-linux-sdk.tar.gz
     - name: Build
-      # Build-only: the Static Linux SDK does not ship XCTest, so the test
-      # suite can't run against Musl until it migrates to swift-testing.
       run: swift build -v --swift-sdk x86_64-swift-linux-musl
+    - name: Run tests
+      # The Static Linux SDK ships Swift Testing (though not XCTest), and its
+      # fully static binaries run natively on the glibc host.
+      run: swift test -v --swift-sdk x86_64-swift-linux-musl
 
   android:
     name: Swift on Android (emulator)
