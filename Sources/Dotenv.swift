@@ -4,6 +4,8 @@ import Darwin
 import Glibc
 #elseif canImport(Musl)
 import Musl
+#elseif canImport(Android)
+import Android
 #elseif os(Windows)
 import ucrt
 #else
@@ -14,6 +16,17 @@ import ucrt
 import FoundationEssentials
 #elseif canImport(Foundation)
 import Foundation
+#endif
+
+#if os(Windows)
+/// Shim for POSIX `setenv`, which ucrt doesn't provide; `_putenv_s` always
+/// overwrites, so the overwrite flag is honored by checking for an existing
+/// value first.
+@discardableResult
+private func setenv(_ name: String, _ value: String, _ overwrite: Int32) -> Int32 {
+    guard overwrite != 0 || ProcessInfo.processInfo.environment[name] == nil else { return 0 }
+    return _putenv_s(name, value)
+}
 #endif
 
 /// Structure used to load and save environment files.
@@ -121,7 +134,9 @@ public enum Dotenv {
     ///   - overwrite: Flag that indicates if pre-existing values in the environment should be overwritten with values from the environment file, defaults to `true`.
     public static func configure(atPath path: String = ".env", overwrite: Bool = true) throws {
         let contents = try readFileContents(atPath: path)
-        let lines = contents.split(separator: "\n")
+        // split on any newline grapheme: "\r\n" is a single Character in
+        // Swift, so splitting on "\n" alone would leave CRLF files unsplit
+        let lines = contents.split(whereSeparator: \.isNewline)
         // we loop over all the entries in the file which are already separated by a newline
         for line in lines {
             // ignore comments
@@ -149,7 +164,7 @@ public enum Dotenv {
         guard fileManager.fileExists(atPath: path) else {
             throw LoadingFailure.environmentFileIsMissing
         }
-        guard let contents = try? String(contentsOf: URL(fileURLWithPath: path)) else {
+        guard let contents = try? String(contentsOf: URL(fileURLWithPath: path), encoding: .utf8) else {
             throw LoadingFailure.unableToReadEnvironmentFile
         }
         return contents

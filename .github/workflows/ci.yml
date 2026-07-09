@@ -9,18 +9,76 @@ on:
     - cron: 0 0 * * * # once a day
 
 jobs:
-  build:
-    name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
+  macos:
+    name: Swift ${{ matrix.swift }} on ${{ matrix.os }} (Darwin)
     strategy:
       matrix:
-        os: [macos-latest]
-        swift: ["5.9", "5.10", "6.0", "6.1"]
+        # macos-26 is required for an Xcode with a Swift 6.3 toolchain;
+        # macos-latest still resolves to macOS 15 (Swift 6.2 at newest)
+        os: [macos-26]
+        swift: ["6.3"]
     runs-on: ${{ matrix.os }}
 
     steps:
     - uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: latest-stable
+    - uses: actions/checkout@v4
+    - name: Build
+      run: swift build -v
+    - name: Run tests
+      run: swift test -v
+
+  linux-glibc:
+    name: Swift 6.3 on Ubuntu (Glibc)
+    runs-on: ubuntu-latest
+    container: swift:6.3
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: swift build -v
+    - name: Run tests
+      run: swift test -v
+
+  linux-musl:
+    name: Swift 6.3 on Ubuntu (Musl)
+    runs-on: ubuntu-latest
+    # the Static Linux SDK below is built for exactly this toolchain version;
+    # when bumping Swift, take the new URL + checksum for both from
+    # https://www.swift.org/install/linux/static-sdk/
+    container: swift:6.3.3
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Static Linux SDK
+      run: swift sdk install https://download.swift.org/swift-6.3.3-release/static-sdk/swift-6.3.3-RELEASE/swift-6.3.3-RELEASE_static-linux-0.1.0.artifactbundle.tar.gz --checksum 87c3eaf908e67c0e13a84367119e12273cec1d2cd3d81f7d74bb36722d6b607b
+    - name: Build
+      # build-only: the Static Linux SDK ships neither XCTest nor Swift
+      # Testing, so the test suite can't target Musl
+      run: swift build -v --swift-sdk x86_64-swift-linux-musl
+
+  android:
+    name: Swift on Android (emulator)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Enable KVM for the Android emulator
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+    - name: Build and test on Android
+      # Cross-compiles with the Swift Android SDK and runs the test suite in
+      # an emulator. Defaults to the latest Swift release (>= 6.3).
+      uses: skiptools/swift-android-action@v2
+
+  windows:
+    name: Swift 6.3 on Windows (ucrt)
+    runs-on: windows-latest
+    steps:
+    - uses: compnerd/gha-setup-swift@main
+      with:
+        branch: swift-6.3-release
+        tag: 6.3-RELEASE
     - uses: actions/checkout@v4
     - name: Build
       run: swift build -v

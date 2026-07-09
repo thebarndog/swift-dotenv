@@ -5,74 +5,101 @@
 //  Created by Brendan Conron on 10/17/21.
 //
 
+#if os(macOS) || os(iOS)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#elseif canImport(Musl)
+import Musl
+#elseif canImport(Android)
+import Android
+#elseif os(Windows)
+import ucrt
+#else
+#error("Unknown platform")
+#endif
+
+import Foundation
 import SwiftDotenv
-import XCTest
+import Testing
 
-final class DotenvTests: XCTestCase {
+#if os(Windows)
+/// Shim for POSIX `setenv`, which ucrt doesn't provide; `_putenv_s` always
+/// overwrites, so the overwrite flag is honored by checking for an existing
+/// value first.
+@discardableResult
+private func setenv(_ name: String, _ value: String, _ overwrite: Int32) -> Int32 {
+    guard overwrite != 0 || ProcessInfo.processInfo.environment[name] == nil else { return 0 }
+    return _putenv_s(name, value)
+}
+#endif
 
-    private static var temporarySaveLocation: String {
-        "\(NSTemporaryDirectory())swift-dotenv/"
+// The environment is process-global state, so the tests must not interleave.
+@Suite(.serialized)
+struct DotenvTests {
+
+    init() throws {
+        let path = try #require(
+            Bundle.module.path(forResource: "fixture", ofType: "env"),
+            "unable to find env file"
+        )
+        try Dotenv.configure(atPath: path)
     }
 
-    override func setUpWithError() throws {
-        try FileManager.default.createDirectory(
-            at: URL(fileURLWithPath: Self.temporarySaveLocation),
-            withIntermediateDirectories: true, attributes: nil
-        )
-        guard let path = Bundle.module.path(forResource: "fixture", ofType: "env") else {
-            XCTFail("unable to find env file")
-            return
-        }
+    @Test func configuringEnvironment() {
+        #expect(Dotenv.apiKey == .string("some-value"))
+        #expect(Dotenv.buildNumber == .integer(5))
+        #expect(Dotenv.identifier == .string("com.app.example"))
+        #expect(Dotenv.mailTemplate == .string("The \"Quoted\" Title"))
+        #expect(Dotenv.dbPassphrase == .string("1qaz?#@\"' wsx$"))
+        #expect(Dotenv.nonExistentValue == nil)
+    }
+
+    @Test func subscriptingByStrings() {
+        // implicitly testing string subscripting
+        #expect(Dotenv["API_KEY"] == .string("some-value"))
+        #expect(Dotenv["BUILD_NUMBER"] == .integer(5))
+        #expect(Dotenv["IDENTIFIER"] == .string("com.app.example"))
+    }
+
+    @Test func configuringEnvironmentWithCRLFLineEndings() throws {
+        // write next to the test bundle rather than temporaryDirectory: the
+        // Android test runner has no usable global temp directory
+        let path = URL(fileURLWithPath: Bundle.module.bundlePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("crlf-fixture.env")
+            .path
+        try "# comment\r\nAPI_KEY=crlf-value\r\n\r\nBUILD_NUMBER=7\r\n".write(toFile: path, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(atPath: path) }
 
         try Dotenv.configure(atPath: path)
 
+        #expect(Dotenv.apiKey == .string("crlf-value"))
+        #expect(Dotenv.buildNumber == .integer(7))
     }
 
-    override func tearDownWithError() throws {
-        if FileManager.default.fileExists(atPath: Self.temporarySaveLocation) {
-            try FileManager.default.removeItem(at: URL(fileURLWithPath: Self.temporarySaveLocation))
-        }
+    @Test func subscriptingNonexistentValue() {
+        #expect(Dotenv.randomVariable == nil)
     }
 
-    func testConfiguringEnvironment() throws {
-        XCTAssertEqual(Dotenv.apiKey, .string("some-value"))
-        XCTAssertEqual(Dotenv.buildNumber, .integer(5))
-        XCTAssertEqual(Dotenv.identifier, .string("com.app.example"))
-        XCTAssertEqual(Dotenv.mailTemplate, .string("The \"Quoted\" Title"))
-        XCTAssertEqual(Dotenv.dbPassphrase, .string("1qaz?#@\"' wsx$"))
-        XCTAssertNil(Dotenv.nonExistentValue)
-    }
-
-    func testSubscriptingByStrings() throws {
-        // implicitly testing string subscripting
-        XCTAssertEqual(Dotenv["API_KEY"], .string("some-value"))
-        XCTAssertEqual(Dotenv["BUILD_NUMBER"], .integer(5))
-        XCTAssertEqual(Dotenv["IDENTIFIER"], .string("com.app.example"))
-    }
-
-    func testSubscriptingNonexistantValue() {
-        XCTAssertNil(Dotenv.randomVariable)
-    }
-
-    func testSettingValues() {
+    @Test func settingValues() {
         Dotenv.set(value: "1234", forKey: "API_KEY")
 
-        XCTAssertEqual(Dotenv.apiKey, .integer(1234))
-        XCTAssertEqual(Dotenv.processInfo.environment["API_KEY"], "1234")
+        #expect(Dotenv.apiKey == .integer(1234))
+        #expect(Dotenv.processInfo.environment["API_KEY"] == "1234")
     }
 
-    func testOverridingValues() {
+    @Test func overridingValues() {
         setenv("API_KEY", "1234", 1)
 
-        XCTAssertEqual(Dotenv.processInfo.environment["API_KEY"], "1234")
+        #expect(Dotenv.processInfo.environment["API_KEY"] == "1234")
 
         Dotenv.set(value: "secret-key", forKey: "API_KEY", overwrite: true)
 
-        XCTAssertEqual(Dotenv.processInfo.environment["API_KEY"], "secret-key")
+        #expect(Dotenv.processInfo.environment["API_KEY"] == "secret-key")
 
         Dotenv.set(value: "super-secret-key", forKey: "API_KEY", overwrite: false)
 
-        XCTAssertEqual(Dotenv.processInfo.environment["API_KEY"], "secret-key")
+        #expect(Dotenv.processInfo.environment["API_KEY"] == "secret-key")
     }
 }
-
