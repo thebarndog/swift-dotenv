@@ -29,7 +29,7 @@ import Testing
 /// value first.
 @discardableResult
 private func setenv(_ name: String, _ value: String, _ overwrite: Int32) -> Int32 {
-    guard overwrite != 0 || getenv(name) == nil else { return 0 }
+    guard overwrite != 0 || ProcessInfo.processInfo.environment[name] == nil else { return 0 }
     return _putenv_s(name, value)
 }
 #endif

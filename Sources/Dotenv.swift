@@ -24,7 +24,7 @@ import Foundation
 /// value first.
 @discardableResult
 private func setenv(_ name: String, _ value: String, _ overwrite: Int32) -> Int32 {
-    guard overwrite != 0 || getenv(name) == nil else { return 0 }
+    guard overwrite != 0 || ProcessInfo.processInfo.environment[name] == nil else { return 0 }
     return _putenv_s(name, value)
 }
 #endif
@@ -134,7 +134,9 @@ public enum Dotenv {
     ///   - overwrite: Flag that indicates if pre-existing values in the environment should be overwritten with values from the environment file, defaults to `true`.
     public static func configure(atPath path: String = ".env", overwrite: Bool = true) throws {
         let contents = try readFileContents(atPath: path)
-        let lines = contents.split(separator: "\n")
+        // split on any newline grapheme: "\r\n" is a single Character in
+        // Swift, so splitting on "\n" alone would leave CRLF files unsplit
+        let lines = contents.split(whereSeparator: \.isNewline)
         // we loop over all the entries in the file which are already separated by a newline
         for line in lines {
             // ignore comments
