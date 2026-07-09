@@ -62,6 +62,17 @@ struct DotenvTests {
         #expect(Dotenv["IDENTIFIER"] == .string("com.app.example"))
     }
 
+    @Test func configuringEnvironmentWithCRLFLineEndings() throws {
+        let path = FileManager.default.temporaryDirectory.appendingPathComponent("crlf-fixture.env").path
+        try "# comment\r\nAPI_KEY=crlf-value\r\n\r\nBUILD_NUMBER=7\r\n".write(toFile: path, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(atPath: path) }
+
+        try Dotenv.configure(atPath: path)
+
+        #expect(Dotenv.apiKey == .string("crlf-value"))
+        #expect(Dotenv.buildNumber == .integer(7))
+    }
+
     @Test func subscriptingNonexistentValue() {
         #expect(Dotenv.randomVariable == nil)
     }
