@@ -43,28 +43,14 @@ jobs:
   linux-musl:
     name: Swift 6.3 on Ubuntu (Musl)
     runs-on: ubuntu-latest
-    container: swift:6.3
+    # the Static Linux SDK below is built for exactly this toolchain version;
+    # when bumping Swift, take the new URL + checksum for both from
+    # https://www.swift.org/install/linux/static-sdk/
+    container: swift:6.3.3
     steps:
     - uses: actions/checkout@v4
     - name: Install Static Linux SDK
-      # Musl builds cross-compile through the Static Linux SDK, which must
-      # exactly match the toolchain version, so look up this container's
-      # release in the swift.org install API and let `swift sdk install`
-      # download and checksum-verify the bundle itself.
-      run: |
-        command -v curl > /dev/null && command -v python3 > /dev/null || (apt-get update -qq && apt-get install -y -qq curl python3)
-        TAG="$(swift --version | grep -oE 'swift-[0-9.]+-RELEASE' | head -n 1 || true)"
-        test -n "$TAG" || { echo "no release tag in: $(swift --version)"; exit 1; }
-        curl -fsSL -o releases.json https://www.swift.org/api/v1/install/releases.json
-        python3 -c "import json; releases=json.load(open('releases.json')); release=next(r for r in releases if r.get('tag')=='$TAG'); print(json.dumps(next(p for p in release['platforms'] if p.get('platform')=='static-sdk')))" > static-sdk.json
-        echo "swift.org static-sdk record: $(cat static-sdk.json)"
-        CHECKSUM="$(python3 -c "import json; print(json.load(open('static-sdk.json'))['checksum'])")"
-        for NAME in "${TAG}_static-linux-0.0.1" "${TAG}_static-linux"; do
-          URL="https://download.swift.org/${TAG,,}/static-sdk/${TAG}/${NAME}.artifactbundle.tar.gz"
-          curl -sfIL -o /dev/null "$URL" && break || URL=""
-        done
-        test -n "$URL" || { echo "no static SDK bundle found under https://download.swift.org/${TAG,,}/static-sdk/${TAG}/"; exit 1; }
-        swift sdk install "$URL" --checksum "$CHECKSUM"
+      run: swift sdk install https://download.swift.org/swift-6.3.3-release/static-sdk/swift-6.3.3-RELEASE/swift-6.3.3-RELEASE_static-linux-0.1.0.artifactbundle.tar.gz --checksum 87c3eaf908e67c0e13a84367119e12273cec1d2cd3d81f7d74bb36722d6b607b
     - name: Build
       run: swift build -v --swift-sdk x86_64-swift-linux-musl
     - name: Run tests
