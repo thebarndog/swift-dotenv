@@ -63,7 +63,12 @@ struct DotenvTests {
     }
 
     @Test func configuringEnvironmentWithCRLFLineEndings() throws {
-        let path = FileManager.default.temporaryDirectory.appendingPathComponent("crlf-fixture.env").path
+        // write next to the test bundle rather than temporaryDirectory: the
+        // Android test runner has no usable global temp directory
+        let path = URL(fileURLWithPath: Bundle.module.bundlePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("crlf-fixture.env")
+            .path
         try "# comment\r\nAPI_KEY=crlf-value\r\n\r\nBUILD_NUMBER=7\r\n".write(toFile: path, atomically: true, encoding: .utf8)
         defer { try? FileManager.default.removeItem(atPath: path) }
 
