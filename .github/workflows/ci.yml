@@ -52,11 +52,9 @@ jobs:
     - name: Install Static Linux SDK
       run: swift sdk install https://download.swift.org/swift-6.3.3-release/static-sdk/swift-6.3.3-RELEASE/swift-6.3.3-RELEASE_static-linux-0.1.0.artifactbundle.tar.gz --checksum 87c3eaf908e67c0e13a84367119e12273cec1d2cd3d81f7d74bb36722d6b607b
     - name: Build
+      # build-only: the Static Linux SDK ships neither XCTest nor Swift
+      # Testing, so the test suite can't target Musl
       run: swift build -v --swift-sdk x86_64-swift-linux-musl
-    - name: Run tests
-      # The Static Linux SDK ships Swift Testing (though not XCTest), and its
-      # fully static binaries run natively on the glibc host.
-      run: swift test -v --swift-sdk x86_64-swift-linux-musl
 
   android:
     name: Swift on Android (emulator)
