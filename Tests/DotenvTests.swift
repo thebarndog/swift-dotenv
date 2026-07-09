@@ -23,6 +23,17 @@ import Foundation
 import SwiftDotenv
 import Testing
 
+#if os(Windows)
+/// Shim for POSIX `setenv`, which ucrt doesn't provide; `_putenv_s` always
+/// overwrites, so the overwrite flag is honored by checking for an existing
+/// value first.
+@discardableResult
+private func setenv(_ name: String, _ value: String, _ overwrite: Int32) -> Int32 {
+    guard overwrite != 0 || getenv(name) == nil else { return 0 }
+    return _putenv_s(name, value)
+}
+#endif
+
 // The environment is process-global state, so the tests must not interleave.
 @Suite(.serialized)
 struct DotenvTests {

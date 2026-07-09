@@ -18,6 +18,17 @@ import FoundationEssentials
 import Foundation
 #endif
 
+#if os(Windows)
+/// Shim for POSIX `setenv`, which ucrt doesn't provide; `_putenv_s` always
+/// overwrites, so the overwrite flag is honored by checking for an existing
+/// value first.
+@discardableResult
+private func setenv(_ name: String, _ value: String, _ overwrite: Int32) -> Int32 {
+    guard overwrite != 0 || getenv(name) == nil else { return 0 }
+    return _putenv_s(name, value)
+}
+#endif
+
 /// Structure used to load and save environment files.
 @dynamicMemberLookup
 public enum Dotenv {
@@ -151,7 +162,7 @@ public enum Dotenv {
         guard fileManager.fileExists(atPath: path) else {
             throw LoadingFailure.environmentFileIsMissing
         }
-        guard let contents = try? String(contentsOf: URL(fileURLWithPath: path)) else {
+        guard let contents = try? String(contentsOf: URL(fileURLWithPath: path), encoding: .utf8) else {
             throw LoadingFailure.unableToReadEnvironmentFile
         }
         return contents
